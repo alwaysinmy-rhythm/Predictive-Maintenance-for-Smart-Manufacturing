@@ -3,6 +3,7 @@ import './CSS/LoginModal.css'; // Make sure to create this CSS file
 import { useNavigate } from "react-router-dom";
 
 const BACKEND_URL = 'https://predictive-maintenance-for-smart.onrender.com'
+// const BACKEND_URL='http://localhost:8000';
 
 const LoginModal = ({ onClose }) => {
   

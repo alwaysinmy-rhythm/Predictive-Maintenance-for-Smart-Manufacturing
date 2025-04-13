@@ -7,6 +7,8 @@ import './CSS/Dashboard.css';
 import axios from 'axios';
 
 const BACKEND_URL='https://predictive-maintenance-for-smart.onrender.com';
+// const BACKEND_URL='http://localhost:8000';
+
 
 const Dashboard = () => {
   const [machineData, setMachineData] = useState([]);
