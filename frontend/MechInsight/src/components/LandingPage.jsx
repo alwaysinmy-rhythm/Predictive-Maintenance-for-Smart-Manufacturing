@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './CSS/LandingPage.css';
+import './CSS/Landingpage.css';
 import LoginModal from './LoginModal';
 
 const LandingPage = () => {
