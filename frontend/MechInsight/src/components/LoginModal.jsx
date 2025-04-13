@@ -81,7 +81,7 @@ const LoginModal = ({ onClose }) => {
         });
         
         const data = await response.json();
-        // console.log(data);
+        console.log(data);
         if (response.ok) {
           // Store JWT token in localStorage
           localStorage.setItem('token', data.token);
