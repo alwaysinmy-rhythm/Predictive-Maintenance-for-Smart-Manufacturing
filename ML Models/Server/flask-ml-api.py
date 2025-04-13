@@ -134,7 +134,7 @@ def process_all_machines():
 def initialize():
     global scheduler
     # Run the processing function every 5 minutes (adjust as needed)
-    scheduler.add_job(func=process_all_machines, trigger="interval", minutes=1)
+    scheduler.add_job(func=process_all_machines, trigger="interval", minutes=0.1)
     scheduler.start()
     logger.info("Scheduler started")
 

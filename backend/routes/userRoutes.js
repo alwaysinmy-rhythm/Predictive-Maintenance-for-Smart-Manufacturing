@@ -2,7 +2,7 @@
 import express from 'express'; 
 
 import {signupController , loginController} from '../controller/signup.js'
-import {machinedetailsController} from '../controller/machine.js'
+import {machinedetailsController, getMachineDetailById} from '../controller/machine.js'
 import authentication from '../middleware/authentication.js';
 import dotenv from 'dotenv' ;
 
@@ -20,7 +20,7 @@ router.get('/' , (req, res )=>{
 router.post('/signup' , signupController ); 
 router.post('/login' ,  loginController)
 router.post('/machine_details' ,authentication,  machinedetailsController)
-
+router.get('/machine_details/:machineId',authentication, getMachineDetailById);
 
 router.post('/test' , (req, res )=>{
     console.log(req.body); 

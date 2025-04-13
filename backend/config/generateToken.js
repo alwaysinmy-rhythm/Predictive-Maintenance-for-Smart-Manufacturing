@@ -6,7 +6,7 @@ const secertkey = process.env.SECRET_KEY;
 
 function generateToken(user){
     const payload = {
-        email : user.email, 
+        username : user.username, 
     }
     return jwt.sign(payload , secertkey , {expiresIn : '1h'}); 
 }

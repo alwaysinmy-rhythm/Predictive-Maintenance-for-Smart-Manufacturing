@@ -4,125 +4,149 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import './CSS/Dashboard.css';
+import axios from 'axios';
 
-// Generate the last 12 hours of timestamps (one entry per hour)
-const generateTimeData = () => {
-  const data = [];
-  const now = new Date();
-  
-  for (let i = 11; i >= 0; i--) {
-    const timestamp = new Date(now);
-    timestamp.setHours(now.getHours() - i);
-    
-    data.push({
-      timestamp: timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      temperature: Math.floor(Math.random() * 15) + 65, // 65-80
-      powerConsumption: Math.floor(Math.random() * 40) + 140, // 140-180
-      cuttingForce: Math.floor(Math.random() * 30) + 85, // 85-115
-      healthScore: Math.floor(Math.random() * 30) + 70, // 70-100
-      anomalyScore: Math.floor(Math.random() * 5) // 0-5
-    });
-  }
-  
-  return data;
-};
-
-// Generate machine dummy data
-const generateMachineData = () => [
-  { machine_no: 'M001', maintenance: true, anomaly: 3, health: 45 },
-  { machine_no: 'M002', maintenance: false, anomaly: 0, health: 92 },
-  { machine_no: 'M003', maintenance: false, anomaly: 1, health: 78 },
-  { machine_no: 'M004', maintenance: true, anomaly: 5, health: 32 },
-  { machine_no: 'M005', maintenance: false, anomaly: 0, health: 88 },
-  { machine_no: 'M006', maintenance: false, anomaly: 0, health: 95 },
-  { machine_no: 'M007', maintenance: true, anomaly: 2, health: 63 },
-];
-
-// Generate initial anomalies data
-const generateAnomaliesData = () => [
-  { machine_no: 'M001', anomaly: 3, timestamp: '4/13/2025, 10:15:22 AM' },
-  { machine_no: 'M003', anomaly: 1, timestamp: '4/13/2025, 9:45:07 AM' },
-  { machine_no: 'M004', anomaly: 5, timestamp: '4/13/2025, 8:30:45 AM' },
-  { machine_no: 'M007', anomaly: 2, timestamp: '4/12/2025, 11:22:18 PM' }
-];
+const BACKEND_URL='http://localhost:8000';
 
 const Dashboard = () => {
-  const [machineData, setMachineData] = useState(() => generateTimeData());
-  const [machines, setMachines] = useState(() => generateMachineData());
-  const [anomalies, setAnomalies] = useState(() => generateAnomaliesData());
+  const [machineData, setMachineData] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [anomalies, setAnomalies] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString());
-  const [selectedMachine, setSelectedMachine] = useState("M001");
+  const [selectedMachine, setSelectedMachine] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Function to simulate data updates
-  const updateData = () => {
-    // Update time series data
-    const newDataPoint = {
-      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      temperature: Math.floor(Math.random() * 15) + 65,
-      powerConsumption: Math.floor(Math.random() * 40) + 140,
-      cuttingForce: Math.floor(Math.random() * 30) + 85,
-      healthScore: Math.floor(Math.random() * 30) + 70,
-      anomalyScore: Math.floor(Math.random() * 5)
-    };
-    
-    setMachineData(prevData => {
-      const newData = [...prevData.slice(1), newDataPoint];
-      return newData;
-    });
-    
-    // Randomly update some machine values
-    const updatedMachines = machines.map(machine => {
-      // 30% chance to change a machine's data
-      if (Math.random() > 0.7) {
-        // Generate new random values
-        const newHealth = Math.max(20, Math.min(100, machine.health + Math.floor(Math.random() * 20) - 10));
-        const newAnomaly = Math.random() > 0.7 ? Math.floor(Math.random() * 6) : machine.anomaly;
-        const newMaintenance = newHealth < 50 ? true : machine.maintenance;
-        
-        return {
-          ...machine,
-          health: newHealth,
-          anomaly: newAnomaly,
-          maintenance: newMaintenance
-        };
+  // Function to fetch all machines data from the backend
+  const fetchMachinesData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        setLoading(false);
+        return;
       }
-      return machine;
-    });
-    
-    setMachines(updatedMachines);
-    
-    // Check for new anomalies
-    const newAnomalies = updatedMachines
-      .filter(machine => machine.anomaly > 0)
-      .map(machine => ({
-        machine_no: machine.machine_no,
-        anomaly: machine.anomaly,
-        timestamp: new Date().toLocaleString()
-      }))
-      .filter(anomaly => 
-        !anomalies.some(
-          existing => 
-            existing.machine_no === anomaly.machine_no && 
-            existing.anomaly === anomaly.anomaly &&
-            existing.timestamp === anomaly.timestamp
-        )
+
+      const response = await axios.post(
+        `${BACKEND_URL}/machine_details`,
+        {},
+        {
+          headers: {
+            token: token
+          }
+        }
       );
-    
-    // Add new anomalies to the array
-    if (newAnomalies.length > 0) {
-      setAnomalies(prevAnomalies => [...newAnomalies, ...prevAnomalies]);
+
+      console.log('All Machines API Response:', response.data);
+
+      if (response.data && response.data.machines) {
+        // Process machines data
+        const machinesData = response.data.machines.map(machine => ({
+          machine_no: machine.id,
+          maintenance: machine.predicted_days_to_maintenance <= 7,
+          anomaly: machine.predicted_anomaly ? machine.anomaly_score : 0,
+          health: machine.predicted_health_score,
+        }));
+        
+        setMachines(machinesData);
+        
+        // Set default selected machine if not already set
+        if (!selectedMachine && machinesData.length > 0) {
+          setSelectedMachine(machinesData[0].machine_no);
+        }
+        
+        // Process anomalies
+        const anomaliesData = response.data.machines
+          .filter(machine => machine.predicted_anomaly)
+          .map(machine => ({
+            machine_no: machine.id,
+            anomaly: machine.anomaly_score,
+            anomaly_type: machine.predicted_anomaly_type,
+            timestamp: new Date(machine.timestamp).toLocaleString()
+          }));
+        
+        setAnomalies(anomaliesData);
+        setLastUpdated(new Date().toLocaleString());
+        setError(null);
+      } else {
+        setError('Invalid data received from server');
+      }
+    } catch (err) {
+      console.error('Error fetching machines data:', err);
+      setError(`Failed to fetch machines data: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-    
-    setLastUpdated(new Date().toLocaleString());
   };
 
+  // Function to fetch data for a specific machine
+  const fetchMachineDetails = async (machineId) => {
+    if (!machineId) return;
+    
+    try {
+      setDetailLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('Token not found for machine details');
+        return;
+      }
+
+      const response = await axios.get(
+        `${BACKEND_URL}/machine_details/${machineId}`,
+        {
+          headers: {
+            token: token
+          }
+        }
+      );
+
+      console.log(`Machine ${machineId} Detail Response:`, response.data);
+
+      if (response.data && response.data.timeSeriesData) {
+        // Format the time series data for the charts - match field names from backend
+        const formattedData = response.data.timeSeriesData.map(item => ({
+          timestamp: new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          temperature: item.motor_temp_c, 
+          powerConsumption: item.power_consumption_w, 
+          cuttingForce: item.cutting_force_n, 
+          healthScore: item.predicted_health_score,
+          anomalyScore: item.anomaly_score
+        }));
+        
+        // Reverse to show oldest to newest (left to right in charts)
+        setMachineData(formattedData.reverse());
+      } else {
+        console.warn('No time series data found for machine:', machineId);
+        setMachineData([]);
+      }
+    } catch (err) {
+      console.error(`Error fetching details for machine ${machineId}:`, err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // Fetch all machines data when component mounts
   useEffect(() => {
-    // Set up interval to simulate data updates every minute
-    const intervalId = setInterval(updateData, 60000);
+    fetchMachinesData();
+    
+    // Set up interval to refresh all machines data every minute
+    const intervalId = setInterval(fetchMachinesData, 60000);
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [machines, anomalies]);
+  }, []);
+
+  // Fetch detailed data when selectedMachine changes
+  useEffect(() => {
+    if (selectedMachine) {
+      fetchMachineDetails(selectedMachine);
+    }
+  }, [selectedMachine]);
 
   // Function to determine row class based on health status
   const getRowClass = (health) => {
@@ -136,6 +160,21 @@ const Dashboard = () => {
     if (value >= 50) return "#f1c40f";
     return "#e74c3c";
   };
+
+  // Check if we're still loading initial data
+  if (loading && machines.length === 0) {
+    return <div className="loading">Loading machine data...</div>;
+  }
+
+  // If there's an error and no data, show error message
+  if (error && machines.length === 0) {
+    return <div className="error-message">{error}</div>;
+  }
+
+  // If we have no data yet (but no error), show empty state
+  if (machines.length === 0) {
+    return <div className="empty-state">No machine data available. Please check your connection.</div>;
+  }
 
   return (
     <div className="dashboard-container">
@@ -157,6 +196,7 @@ const Dashboard = () => {
         </div>
         <div className="last-updated">
           Last updated: {lastUpdated}
+          {loading && <span className="loading-indicator"> (Refreshing...)</span>}
         </div>
       </header>
 
@@ -184,9 +224,9 @@ const Dashboard = () => {
                     <td>{machine.machine_no}</td>
                     <td>{machine.maintenance ? 'Required' : 'Not Required'}</td>
                     <td className={machine.anomaly > 0 ? 'anomaly-alert' : ''}>
-                      {machine.anomaly}
+                      {typeof machine.anomaly === 'number' ? machine.anomaly.toFixed(2) : '0.00'}
                     </td>
-                    <td>{machine.health}%</td>
+                    <td>{typeof machine.health === 'number' ? machine.health.toFixed(1) : '0.0'}%</td>
                     <td>
                       <span className={`status-indicator ${getRowClass(machine.health)}`}></span>
                       {machine.health >= 80 ? 'Good' : machine.health >= 50 ? 'Warning' : 'Critical'}
@@ -209,7 +249,12 @@ const Dashboard = () => {
                     <span className="anomaly-time">{anomaly.timestamp}</span>
                   </div>
                   <div className="anomaly-details">
-                    Anomaly Level: <span className="anomaly-value">{anomaly.anomaly}</span>
+                    <div>Anomaly Level: <span className="anomaly-value">
+                      {typeof anomaly.anomaly === 'number' ? anomaly.anomaly.toFixed(2) : '0.00'}
+                    </span></div>
+                    {anomaly.anomaly_type && (
+                      <div>Type: <span className="anomaly-type">{anomaly.anomaly_type}</span></div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -221,115 +266,154 @@ const Dashboard = () => {
       </div>
       
       <div className="graphs-container">
+        {/* Temperature Graph */}
         <section className="graph-section">
-          <h2>Machine Parameters</h2>
+          <h2>Temperature (°C) {detailLoading && <span className="loading-indicator">(Loading...)</span>}</h2>
           <div className="graph-wrapper">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
-                  formatter={(value, name) => {
-                    const formattedName = {
-                      temperature: 'Temperature',
-                      powerConsumption: 'Power Consumption',
-                      cuttingForce: 'Cutting Force'
-                    }[name] || name;
-                    return [`${value} ${name === 'temperature' ? '°C' : name === 'powerConsumption' ? 'W' : 'N'}`, formattedName];
-                  }}
-                  labelFormatter={(label) => `Time: ${label}`}
-                />
-                <Legend 
-                  formatter={(value) => {
-                    return {
-                      temperature: 'Temperature (°C)',
-                      powerConsumption: 'Power Consumption (W)',
-                      cuttingForce: 'Cutting Force (N)'
-                    }[value] || value;
-                  }}
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="temperature"
-                  stroke="#e74c3c"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="powerConsumption"
-                  stroke="#3498db"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="cuttingForce"
-                  stroke="#2ecc71"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {machineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [`${value} °C`, 'Temperature']}
+                    labelFormatter={(label) => `Time: ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="temperature" 
+                    stroke="#e74c3c" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-data-message">No temperature data available</div>
+            )}
+          </div>
+        </section>
+
+        {/* Power Consumption Graph */}
+        <section className="graph-section">
+          <h2>Power Consumption (W)</h2>
+          <div className="graph-wrapper">
+            {machineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [`${value} W`, 'Power Consumption']}
+                    labelFormatter={(label) => `Time: ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="powerConsumption" 
+                    stroke="#3498db" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-data-message">No power consumption data available</div>
+            )}
+          </div>
+        </section>
+
+        {/* Cutting Force Graph */}
+        <section className="graph-section">
+          <h2>Cutting Force (N)</h2>
+          <div className="graph-wrapper">
+            {machineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [`${value} N`, 'Cutting Force']}
+                    labelFormatter={(label) => `Time: ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="cuttingForce" 
+                    stroke="#2ecc71" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }} 
+                    activeDot={{ r: 6 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-data-message">No cutting force data available</div>
+            )}
           </div>
         </section>
 
         <section className="graph-section">
           <h2>Health Score</h2>
           <div className="graph-wrapper">
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
-                  formatter={(value) => [`${value}%`, 'Health Score']}
-                  labelFormatter={(label) => `Time: ${label}`}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="healthScore" 
-                  stroke="#2ecc71" 
-                  fill="#2ecc71" 
-                  fillOpacity={0.3}
-                  strokeWidth={2}
-                  activeDot={{ r: 6 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {machineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [`${value}%`, 'Health Score']}
+                    labelFormatter={(label) => `Time: ${label}`}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="healthScore" 
+                    stroke="#2ecc71" 
+                    fill="#2ecc71" 
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-data-message">No health score data available</div>
+            )}
           </div>
         </section>
 
         <section className="graph-section">
           <h2>Anomaly Score</h2>
           <div className="graph-wrapper">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis domain={[0, 'dataMax + 1']} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
-                  formatter={(value) => [value, 'Anomaly Score']}
-                  labelFormatter={(label) => `Time: ${label}`}
-                />
-                <Bar 
-                  dataKey="anomalyScore" 
-                  fill="#e74c3c" 
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {machineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={machineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis domain={[0, 'dataMax + 1']} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [value, 'Anomaly Score']}
+                    labelFormatter={(label) => `Time: ${label}`}
+                  />
+                  <Bar 
+                    dataKey="anomalyScore" 
+                    fill="#e74c3c" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-data-message">No anomaly data available</div>
+            )}
           </div>
         </section>
       </div>
@@ -337,9 +421,15 @@ const Dashboard = () => {
       <div className="actions">
         <button 
           className="update-button"
-          onClick={updateData}
+          onClick={() => {
+            fetchMachinesData();
+            if (selectedMachine) {
+              fetchMachineDetails(selectedMachine);
+            }
+          }}
+          disabled={loading || detailLoading}
         >
-          Simulate Data Update
+          {loading || detailLoading ? 'Refreshing...' : 'Refresh Data'}
         </button>
       </div>
     </div>
