@@ -20,6 +20,9 @@ logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Define scheduler at module level so it can be accessed in the shutdown code
+scheduler = BackgroundScheduler()
+
 # Load the ML models
 try:
     models = load_saved_models()
@@ -57,11 +60,11 @@ def process_machine_unit(machine_id, row_idx):
         # Store predictions in the database
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+        timestamp_value = test_df.get('timestamp', pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'))
         # Select important features to store alongside predictions
         important_features = {
             'id': machine_id,
-            'timestamp': test_df['id'],
+            'timestamp': timestamp_value,
             'anomaly_score': results['anomaly_score'],
             'predicted_anomaly': results['predicted_anomaly'],
             'predicted_anomaly_type': results['predicted_anomaly_type'], 
@@ -96,7 +99,8 @@ def process_machine_unit(machine_id, row_idx):
         conn.commit()
         conn.close()
         
-        logger.info(f"Processed machine_id: {machine_id}, row_idx: {row_idx}, is_anomaly: {is_anomaly}")
+        # Fixed is_anomaly reference by using the predicted_anomaly from results
+        logger.info(f"Processed machine_id: {machine_id}, row_idx: {row_idx}, is_anomaly: {results['predicted_anomaly']}")
         return True
     
     except Exception as e:
@@ -107,7 +111,8 @@ def process_machine_unit(machine_id, row_idx):
 def process_all_machines():
     logger.info("Starting processing cycle for all machines")
     conn = get_db_connection()
-    cursor = conn.cursor()
+    # Use RealDictCursor to get dictionary-like results
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     # Get all machine IDs and their current row indices
     cursor.execute('SELECT id, row_idx FROM factory')
@@ -118,7 +123,6 @@ def process_all_machines():
     for pointer in pointers:
         machine_id = pointer['id']
         row_idx = pointer['row_idx']
-        
         success = process_machine_unit(machine_id, row_idx)
         if success:
             processed_count += 1
@@ -128,9 +132,9 @@ def process_all_machines():
 
 # Schedule the processing function to run periodically
 def initialize():
-    scheduler = BackgroundScheduler()
+    global scheduler
     # Run the processing function every 5 minutes (adjust as needed)
-    scheduler.add_job(func=process_all_machines, trigger="interval", minutes=5)
+    scheduler.add_job(func=process_all_machines, trigger="interval", minutes=1)
     scheduler.start()
     logger.info("Scheduler started")
 

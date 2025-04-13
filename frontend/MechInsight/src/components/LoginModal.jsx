@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import './CSS/LoginModal.css'; // Make sure to create this CSS file
+import { useNavigate } from "react-router-dom";
 
 const LoginModal = ({ onClose }) => {
+  
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -15,77 +19,92 @@ const LoginModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Login</h2>
-            <button 
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Sign In
-              </button>
-            </div>
-            
-            <div className="text-sm text-center text-gray-500 mt-4">
-              <a href="#" className="text-blue-600 hover:underline">
-                Forgot your password?
-              </a>
-            </div>
-          </form>
+    <div className="modal-overlay">
+      <div className="modal-container">
+        <div className="modal-header">
+          <h2>Login</h2>
+          <button 
+            onClick={onClose}
+            className="close-button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         
-        <div className="bg-gray-50 px-6 py-4 rounded-b-lg">
-          <p className="text-sm text-center text-gray-600">
-            Don't have an account?{' '}
-            <a href="#" className="text-blue-600 font-medium hover:underline">
-              Sign up
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="username">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          
+          <div className="form-submit">
+  <button
+    type="submit"
+    className="submit-button"
+    onClick={async (e) => {
+      e.preventDefault();
+      try {
+        const response = await fetch('http://localhost:8000/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+        
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+          // Store JWT token in localStorage
+          localStorage.setItem('token', data.token);
+          
+          // Alternatively, if using React Router:
+          navigate('/dashboard');
+        } else {
+          // Handle error case
+          alert(data.message || 'Login failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
+      }
+    }}
+  >
+    Sign In
+  </button>
+</div>
+          
+          <div className="forgot-password">
+            <a href="#">
+              Forgot your password?
             </a>
-          </p>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );

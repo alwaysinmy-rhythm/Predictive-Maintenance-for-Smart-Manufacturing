@@ -1,0 +1,300 @@
+/* Dashboard.css */
+
+/* General Layout and Typography */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #333;
+    background-color: #f9fafb;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+  
+  .last-updated {
+    font-size: 14px;
+    color: #7f8c8d;
+  }
+  
+  .machine-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .machine-selector label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .machine-selector select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    color: #2c3e50;
+    cursor: pointer;
+  }
+  
+  .dashboard-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+  
+  @media (min-width: 992px) {
+    .dashboard-content {
+      grid-template-columns: 3fr 2fr;
+    }
+  }
+  
+  /* Section Styling */
+  .machines-section,
+  .anomalies-section,
+  .graph-section {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+  }
+  
+  .machines-section h2,
+  .anomalies-section h2,
+  .graph-section h2 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-weight: 600;
+  }
+  
+  /* Graph Sections */
+  .graphs-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+  
+  .graph-wrapper {
+    height: 100%;
+    width: 100%;
+    background-color: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  /* Table Styling */
+  .table-container {
+    overflow-x: auto;
+    margin-bottom: 10px;
+  }
+  
+  .machines-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  
+  .machines-table th {
+    background-color: #f8f9fa;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  .machines-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ecf0f1;
+  }
+  
+  .machines-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .machines-table tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .machines-table tr:hover {
+    background-color: #f5f7fa;
+  }
+  
+  .machines-table tr.selected-row {
+    background-color: #e8f4fc;
+    border-left: 3px solid #3498db;
+  }
+  
+  /* Row status colors */
+  .machines-table tr.healthy {
+    background-color: rgba(46, 204, 113, 0.05);
+  }
+  
+  .machines-table tr.warning {
+    background-color: rgba(241, 196, 15, 0.05);
+  }
+  
+  .machines-table tr.critical {
+    background-color: rgba(231, 76, 60, 0.05);
+  }
+  
+  .machines-table tr.selected-row.healthy {
+    background-color: rgba(46, 204, 113, 0.15);
+  }
+  
+  .machines-table tr.selected-row.warning {
+    background-color: rgba(241, 196, 15, 0.15);
+  }
+  
+  .machines-table tr.selected-row.critical {
+    background-color: rgba(231, 76, 60, 0.15);
+  }
+  
+  /* Status indicator */
+  .status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  
+  .status-indicator.healthy {
+    background-color: #2ecc71;
+  }
+  
+  .status-indicator.warning {
+    background-color: #f1c40f;
+  }
+  
+  .status-indicator.critical {
+    background-color: #e74c3c;
+  }
+  
+  /* Anomaly alert */
+  .anomaly-alert {
+    color: #e74c3c;
+    font-weight: 600;
+  }
+  
+  /* Anomalies List */
+  .anomalies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  
+  .anomaly-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #e74c3c;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .anomaly-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .anomaly-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  
+  .machine-label {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .anomaly-time {
+    font-size: 12px;
+    color: #7f8c8d;
+  }
+  
+  .anomaly-details {
+    font-size: 14px;
+  }
+  
+  .anomaly-value {
+    font-weight: 600;
+    color: #e74c3c;
+  }
+  
+  .no-anomalies {
+    color: #7f8c8d;
+    font-style: italic;
+    text-align: center;
+    padding: 30px 0;
+  }
+  
+  /* Loading and Error States */
+  .loading,
+  .error {
+    text-align: center;
+    padding: 40px 0;
+    color: #7f8c8d;
+  }
+  
+  .error {
+    color: #e74c3c;
+  }
+  
+  /* Actions Section */
+  .actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .update-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .update-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .update-button:active {
+    transform: translateY(0);
+  }
+  
+  .update-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.4);
+  }

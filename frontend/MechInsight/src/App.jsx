@@ -3,14 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import './App.css';
+import LoginModal from './components/LoginModal';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('username'));
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/" element={<LandingPage />} />
         <Route 
           path="/dashboard" 
           element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />} 
