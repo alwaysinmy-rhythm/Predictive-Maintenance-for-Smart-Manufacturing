@@ -66,6 +66,51 @@ feature_columns = [
    - Anomaly classification (type)
    - Future maintenance predictions
    - Current machine health score
+  
+## 📊 Feature Distributions
+
+Understanding the underlying distributions of various features in the dataset.
+
+![Distributions](./Distributions.jpg)
+
+## 🔍 Feature Importance
+
+### Anomaly Type Classification
+Feature importance for identifying types of anomalies in equipment behavior.
+
+![Feature Importance for Anomaly Type Classification](./feature%20importance%20for%20anomly%20type%20classification.jpg)
+
+### Health Score Prediction (Version 1)
+Key features contributing to the prediction of equipment health scores.
+
+![Feature Importance for Health Score Prediction](./feature%20importance%20for%20health%20score%20prediction.jpg)
+
+---
+
+## 📉 LSTM Model Performance
+
+Training and validation loss over epochs for the LSTM model used in time-series forecasting.
+
+![LSTM Training and Validation Loss](./LSTM%20training%20and%20validiation%20loss%20plot.jpg)
+
+---
+
+## 🛠️ Maintenance Prediction
+
+Predicted maintenance windows or failure probabilities over time.
+
+![Maintenance Prediction](./Maintenance%20prediction%20plot.jpg)
+
+---
+
+## 📈 Model Evaluation
+
+Performance scores and confusion matrices for multiple machine learning models.
+
+![Model Scores and Confusion Matrices](./score%20and%20confusion%20matrics%20for%20models.jpg)
+
+---
+
 
 ## How to Run the Project
 
