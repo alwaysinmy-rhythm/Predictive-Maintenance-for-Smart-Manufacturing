@@ -20,6 +20,7 @@ const LandingPage = () => {
             <a href="#features" className="nav-link">Features</a>
             <a href="#how-it-works" className="nav-link">How It Works</a>
             <a href="#pricing" className="nav-link">Pricing</a>
+            <a href="/aboutus" className="nav-link">About Us</a>
           </nav>
           <div className="auth-buttons">
             <button className="btn btn-primary" onClick={() => setShowLoginModal(true)}>Login</button>
