@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import './CSS/LoginModal.css'; // Make sure to create this CSS file
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = 'https://predictive-maintenance-for-smart.onrender.com'
+
 const LoginModal = ({ onClose }) => {
   
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ const LoginModal = ({ onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Login submitted with:', { username, password });
+    // console.log('Login submitted with:', { username, password });
     // Here you would typically handle the login logic
     // For example, call an API to authenticate the user
     
@@ -69,7 +71,7 @@ const LoginModal = ({ onClose }) => {
     onClick={async (e) => {
       e.preventDefault();
       try {
-        const response = await fetch('http://localhost:8000/login', {
+        const response = await fetch(`${BACKEND_URL}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -78,7 +80,7 @@ const LoginModal = ({ onClose }) => {
         });
         
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         if (response.ok) {
           // Store JWT token in localStorage
           localStorage.setItem('token', data.token);
@@ -90,7 +92,7 @@ const LoginModal = ({ onClose }) => {
           alert(data.message || 'Login failed. Please try again.');
         }
       } catch (error) {
-        console.error('Login error:', error);
+        // console.error('Login error:', error);
         alert('An error occurred during login. Please try again.');
       }
     }}

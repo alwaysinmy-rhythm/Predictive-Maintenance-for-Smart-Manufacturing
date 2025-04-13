@@ -6,7 +6,7 @@ import {
 import './CSS/Dashboard.css';
 import axios from 'axios';
 
-const BACKEND_URL='http://localhost:8000';
+const BACKEND_URL='https://predictive-maintenance-for-smart.onrender.com';
 
 const Dashboard = () => {
   const [machineData, setMachineData] = useState([]);
@@ -40,7 +40,7 @@ const Dashboard = () => {
         }
       );
 
-      console.log('All Machines API Response:', response.data);
+      // console.log('All Machines API Response:', response.data);
 
       if (response.data && response.data.machines) {
         // Process machines data
@@ -75,7 +75,7 @@ const Dashboard = () => {
         setError('Invalid data received from server');
       }
     } catch (err) {
-      console.error('Error fetching machines data:', err);
+      // console.error('Error fetching machines data:', err);
       setError(`Failed to fetch machines data: ${err.message}`);
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        console.error('Token not found for machine details');
+        // console.error('Token not found for machine details');
         return;
       }
 
@@ -104,7 +104,7 @@ const Dashboard = () => {
         }
       );
 
-      console.log(`Machine ${machineId} Detail Response:`, response.data);
+      // console.log(`Machine ${machineId} Detail Response:`, response.data);
 
       if (response.data && response.data.timeSeriesData) {
         // Format the time series data for the charts - match field names from backend
