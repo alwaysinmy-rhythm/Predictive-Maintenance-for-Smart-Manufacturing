@@ -237,7 +237,7 @@ const mediaQueries = {
   desktop: window.innerWidth >= 768
 };
 
-const AboutPage = () => {
+const Aboutus = () => {
   return (
     <div style={styles.container}>
       {/* Header Section */}
@@ -497,4 +497,4 @@ const AboutPage = () => {
   );
 };
 
-export default AboutPage;
+export default Aboutus;
